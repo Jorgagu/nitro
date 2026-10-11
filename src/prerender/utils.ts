@@ -70,8 +70,12 @@ function getExtension(link: string): string {
   return (pathname.match(EXT_REGEX) || [])[0] || "";
 }
 
-export function formatPrerenderRoute(route: PrerenderRoute) {
+export function formatPrerenderRoute(route: PrerenderRoute, progress?: string) {
   let str = `  ├─ ${route.route} (${route.generateTimeMS}ms)`;
+
+  if (progress) {
+    str += ` ${progress}`;
+  }
 
   if (route.error) {
     const parents = linkParents.get(route.route);

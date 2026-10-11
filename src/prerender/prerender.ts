@@ -101,6 +101,14 @@ export async function prerender(nitro: Nitro) {
   const skippedRoutes = new Set();
   const displayedLengthWarns = new Set();
 
+  // The crawler only knows the total once the queue drains, so progress is reported
+  // against the routes discovered so far
+  let loggedRoutes = 0;
+  const nextProgress = () => {
+    loggedRoutes++;
+    return `[${loggedRoutes}/${Math.max(loggedRoutes, generatedRoutes.size + routes.size)}]`;
+  };
+
   const publicAssetBases: string[] = nitro.options.publicAssets
     .filter(
       (a): a is PublicAssetDir & { baseURL: string } =>
@@ -277,7 +285,7 @@ export async function prerender(nitro: Nitro) {
     // Check if route is skipped or has errors
     if (_route.skip || _route.error) {
       await nitro.hooks.callHook("prerender:route", _route);
-      nitro.logger.log(formatPrerenderRoute(_route));
+      nitro.logger.log(formatPrerenderRoute(_route, nextProgress()));
       dataBuff = undefined; // Free memory
       return _route;
     }
@@ -307,7 +315,7 @@ export async function prerender(nitro: Nitro) {
     }
 
     await nitro.hooks.callHook("prerender:route", _route);
-    nitro.logger.log(formatPrerenderRoute(_route));
+    nitro.logger.log(formatPrerenderRoute(_route, nextProgress()));
 
     dataBuff = undefined; // Free memory
     return _route;
